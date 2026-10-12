@@ -1,4 +1,4 @@
-# Notch Us 🫠
+# Notch Us 🌮
 
 > *"You've reached your usage limit."* — Claude, right when things were getting good.
 
@@ -6,7 +6,7 @@ Your MacBook's notch was just sitting there doing nothing. Now it does something
 it tells you how close you are to getting rate-limited by Claude Code, **before** it happens.
 
 **Notch Us** is a tiny macOS menu bar + notch app that shows your Claude Code **session (5h)** and **weekly** usage limits at a glance.
-Because the notch notches us, and Claude limits us. Notch us.
+Because the notch notches us, and Claude limits us. Notch us. (Say it fast. Yes, like nachos 🧀)
 
 ## What it shows
 

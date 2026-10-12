@@ -1,3 +1,5 @@
+<p align="center"><img src="Resources/AppIcon.png" width="160" alt="Notch Us icon: a taco with a spark for a filling"></p>
+
 # Notch Us 🌮
 
 > *"You've reached your usage limit."* — Claude, right when things were getting good.

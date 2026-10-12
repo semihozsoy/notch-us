@@ -2,7 +2,7 @@ import SwiftUI
 import Combine
 
 @main
-struct ClaudeNotchApp: App {
+struct NotchUsApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @ObservedObject private var store = UsageStore.shared
 

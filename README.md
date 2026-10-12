@@ -27,7 +27,26 @@ Nothing leaves your machine except that single request to Anthropic. No analytic
 
 ## Install
 
-Requires macOS 14+ and the Xcode Command Line Tools (`xcode-select --install`).
+Requires macOS 14+ (Apple Silicon or Intel). You need to be logged in to Claude Code (`claude` → `/login`) so the token is in the keychain.
+
+### One-liner (recommended)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/semihozsoy/notch-us/master/install.sh | sh
+```
+
+Downloads the latest release, puts it in `~/Applications` and opens it. Run it again any time to update.
+
+### Manual download
+
+Grab `NotchUs.zip` from the [latest release](https://github.com/semihozsoy/notch-us/releases/latest), unzip it and move `NotchUs.app` to Applications.
+
+The app isn't notarized by Apple (that costs $99/year, and we spent it on tacos 🌮), so macOS will block it the first time.
+To open it anyway: try to open it once, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
+### Build from source
+
+Requires the Xcode Command Line Tools (`xcode-select --install`).
 
 ```sh
 git clone https://github.com/semihozsoy/notch-us.git
@@ -36,7 +55,13 @@ cd notch-us
 ./build.sh --install  # also installs to ~/Applications and launches it
 ```
 
-You need to be logged in to Claude Code (`claude` → `/login`) so the token is in the keychain.
+### Releasing
+
+Push a version tag and GitHub Actions builds a universal app and publishes the release:
+
+```sh
+git tag v1.0.0 && git push origin v1.0.0
+```
 
 ## Disclaimer
 

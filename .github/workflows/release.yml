@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: UNIVERSAL=1 VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+
+      - name: Zip
+        run: ditto -c -k --keepParent build/NotchUs.app build/NotchUs.zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/NotchUs.zip --title "Notch Us $GITHUB_REF_NAME 🌮" --generate-notes

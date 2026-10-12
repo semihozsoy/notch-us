@@ -1,13 +1,24 @@
 #!/bin/zsh
 # Builds NotchUs.app and installs it to ~/Applications.
+# UNIVERSAL=1 builds for both Apple Silicon and Intel; VERSION sets the app version.
 set -e
 cd "$(dirname "$0")"
 
-swift build -c release
+VERSION=${VERSION:-1.0.0}
 APP=build/NotchUs.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/NotchUs "$APP/Contents/MacOS/"
+if [[ "$UNIVERSAL" == "1" ]]; then
+  bins=()
+  for arch in arm64 x86_64; do
+    swift build -c release --arch $arch
+    bins+=("$(swift build -c release --arch $arch --show-bin-path)/NotchUs")
+  done
+  lipo -create "${bins[@]}" -output "$APP/Contents/MacOS/NotchUs"
+else
+  swift build -c release
+  cp .build/release/NotchUs "$APP/Contents/MacOS/"
+fi
 cp Resources/AppIcon.icns "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -20,8 +31,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>NotchUs</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>$VERSION</string>
+  <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
 </dict>

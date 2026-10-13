@@ -25,6 +25,9 @@ final class UsageStore: ObservableObject {
     private var pollTimer: Timer?
     private var clockTimer: Timer?
     private let pollInterval: TimeInterval = 120
+    /// Set after a 429; polls before this date skip the API so the limit can clear.
+    private var backoffUntil: Date?
+    private var backoff: TimeInterval = 0
 
     private init() {
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { _ in
@@ -42,6 +45,10 @@ final class UsageStore: ObservableObject {
         defer { isLoading = false; now = Date() }
 
         async let stats = Task.detached(priority: .utility) { LocalStats.load() }.value
+        if let until = backoffUntil, until > Date() {
+            local = await stats
+            return
+        }
         do {
             let result = try await Task.detached { try UsageAPI.fetch() }.value
             session = result.session
@@ -50,6 +57,14 @@ final class UsageStore: ObservableObject {
             plan = result.plan
             error = nil
             lastUpdated = Date()
+            backoffUntil = nil
+            backoff = 0
+        } catch UsageError.rateLimited(let retryAfter) {
+            // Back off exponentially (2m, 4m, 8m… up to 30m) unless the server says how long to wait.
+            backoff = min(max(backoff * 2, pollInterval), 1800)
+            let wait = retryAfter ?? backoff
+            backoffUntil = Date().addingTimeInterval(wait)
+            self.error = L10n.rateLimited(Fmt.countdown(to: backoffUntil, now: Date()))
         } catch {
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -63,6 +78,7 @@ enum UsageError: LocalizedError {
     case noCredentials
     case tokenExpired
     case http(Int)
+    case rateLimited(retryAfter: TimeInterval?)
     case badResponse
 
     var errorDescription: String? {
@@ -70,6 +86,7 @@ enum UsageError: LocalizedError {
         case .noCredentials: return L10n.noCredentials
         case .tokenExpired: return L10n.tokenExpired
         case .http(let code): return L10n.httpError(code)
+        case .rateLimited: return L10n.httpError(429)
         case .badResponse: return L10n.badResponse
         }
     }
@@ -127,6 +144,10 @@ enum UsageAPI {
         req.timeoutInterval = 20
 
         let (data, response) = try syncData(req)
+        if let http = response as? HTTPURLResponse, http.statusCode == 429 {
+            let retryAfter = (http.value(forHTTPHeaderField: "Retry-After")).flatMap(TimeInterval.init)
+            throw UsageError.rateLimited(retryAfter: retryAfter)
+        }
         if let http = response as? HTTPURLResponse, http.statusCode != 200 {
             throw http.statusCode == 401 ? UsageError.tokenExpired : UsageError.http(http.statusCode)
         }

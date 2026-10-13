@@ -61,6 +61,8 @@ struct RingView: View {
 struct MenuContent: View {
     @ObservedObject var store: UsageStore
     @AppStorage("showNotch") private var showNotch = true
+    @AppStorage("leftWingWidth") private var leftWingWidth = 66.0
+    @AppStorage("rightWingWidth") private var rightWingWidth = 66.0
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -103,6 +105,10 @@ struct MenuContent: View {
             Divider()
 
             Toggle(L10n.showInNotch, isOn: $showNotch)
+            if showNotch {
+                wingSlider(L10n.leftSide, value: $leftWingWidth)
+                wingSlider(L10n.rightSide, value: $rightWingWidth)
+            }
             Toggle(L10n.launchAtLogin, isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, on in
                     do {
@@ -134,6 +140,13 @@ struct MenuContent: View {
         .controlSize(.small)
         .padding(14)
         .frame(width: 300)
+    }
+
+    private func wingSlider(_ title: String, value: Binding<Double>) -> some View {
+        HStack {
+            Text(title).font(.system(size: 11)).frame(width: 70, alignment: .leading)
+            Slider(value: value, in: 0...140, step: 2)
+        }
     }
 
     private func statLine(_ title: String, _ value: String) -> some View {

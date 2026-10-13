@@ -41,6 +41,8 @@ enum L10n {
     // Menu
     static var title: String { t("Claude Code Usage", "Claude Code Kullanımı") }
     static var showInNotch: String { t("Show in notch", "Çentikte göster") }
+    static var leftSide: String { t("Left side", "Sol taraf") }
+    static var rightSide: String { t("Right side", "Sağ taraf") }
     static var launchAtLogin: String { t("Launch at login", "Girişte başlat") }
     static func launchAtLoginFailed(_ reason: String) -> String {
         t("Couldn't set launch at login: \(reason)", "Girişte başlatma ayarlanamadı: \(reason)")
@@ -58,5 +60,9 @@ enum L10n {
           "Oturum anahtarının süresi dolmuş. Claude Code'u bir kez çalıştırınca yenilenir.")
     }
     static func httpError(_ code: Int) -> String { t("Server error (HTTP \(code)).", "Sunucu hatası (HTTP \(code)).") }
+    static func rateLimited(_ wait: String) -> String {
+        t("Rate limited by the server. Retrying in \(wait).",
+          "Sunucu istek sınırına takıldı. \(wait) sonra tekrar denenecek.")
+    }
     static var badResponse: String { t("Unexpected response.", "Beklenmeyen yanıt.") }
 }

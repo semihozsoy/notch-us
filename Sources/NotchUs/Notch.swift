@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -7,9 +8,13 @@ final class NotchModel: ObservableObject {
     @Published var notchWidth: CGFloat = 180
     @Published var notchHeight: CGFloat = 32
 
-    let wingWidth: CGFloat = 66
-    var compactWidth: CGFloat { notchWidth + wingWidth * 2 }
-    var expandedWidth: CGFloat { max(compactWidth, 380) }
+    @Published var leftWingWidth: CGFloat = 66
+    @Published var rightWingWidth: CGFloat = 66
+
+    var compactWidth: CGFloat { notchWidth + leftWingWidth + rightWingWidth }
+    var expandedWidth: CGFloat { max(notchWidth + max(leftWingWidth, rightWingWidth) * 2, 380) }
+    /// How far the wings' center sits from the notch's center when the wings differ in width.
+    var wingOffset: CGFloat { (rightWingWidth - leftWingWidth) / 2 }
     var expandedHeight: CGFloat { notchHeight + 150 }
 }
 
@@ -23,6 +28,7 @@ final class NotchController {
     private var screenTop: CGFloat = 0
     private var monitors: [Any] = []
     private var collapseTimer: Timer?
+    private var cancellable: AnyCancellable?
 
     func show() {
         guard panel == nil else { return }
@@ -38,6 +44,15 @@ final class NotchController {
         panel.contentView = NSHostingView(rootView: NotchView(store: .shared, model: model))
         self.panel = panel
 
+        cancellable = UserDefaults.standard.publisher(for: \.leftWingWidth)
+            .combineLatest(UserDefaults.standard.publisher(for: \.rightWingWidth))
+            .receive(on: RunLoop.main)
+            .sink { [weak self] left, right in
+                guard let self else { return }
+                self.model.leftWingWidth = left
+                self.model.rightWingWidth = right
+                self.layout()
+            }
         layout()
         panel.orderFrontRegardless()
 
@@ -56,6 +71,7 @@ final class NotchController {
         monitors.removeAll()
         collapseTimer?.invalidate()
         collapseTimer = nil
+        cancellable = nil
         NotificationCenter.default.removeObserver(self)
         panel?.orderOut(nil)
         panel = nil
@@ -84,7 +100,7 @@ final class NotchController {
     }
 
     private var compactRect: NSRect {
-        NSRect(x: notchMidX - model.compactWidth / 2, y: screenTop - model.notchHeight,
+        NSRect(x: notchMidX - model.notchWidth / 2 - model.leftWingWidth, y: screenTop - model.notchHeight,
                width: model.compactWidth, height: model.notchHeight)
     }
 
@@ -131,11 +147,12 @@ struct NotchView: View {
 
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        leftWing.frame(width: model.wingWidth)
+                        leftWing.frame(width: model.leftWingWidth)
                         Color.clear.frame(width: model.notchWidth)
-                        rightWing.frame(width: model.wingWidth)
+                        rightWing.frame(width: model.rightWingWidth)
                     }
                     .frame(height: model.notchHeight)
+                    .offset(x: model.expanded ? model.wingOffset : 0)
 
                     if model.expanded {
                         expandedContent
@@ -147,6 +164,7 @@ struct NotchView: View {
             }
             .frame(width: width, height: height)
             .clipped()
+            .offset(x: model.expanded ? 0 : model.wingOffset)
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -154,26 +172,39 @@ struct NotchView: View {
     }
 
     private var leftWing: some View {
-        HStack(spacing: 5) {
+        // Drops the text, then the ring, as the user narrows the wing.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 5) {
+                if let s = store.session {
+                    RingView(value: s.percent / 100, color: Fmt.color(for: s.percent)).frame(width: 13, height: 13)
+                    Text("\(Int(s.percent.rounded()))%")
+                } else {
+                    Image(systemName: store.error != nil ? "exclamationmark.circle" : "sparkle")
+                        .foregroundStyle(.orange)
+                }
+            }
             if let s = store.session {
                 RingView(value: s.percent / 100, color: Fmt.color(for: s.percent)).frame(width: 13, height: 13)
-                Text("\(Int(s.percent.rounded()))%")
-            } else {
-                Image(systemName: store.error != nil ? "exclamationmark.circle" : "sparkle")
-                    .foregroundStyle(.orange)
             }
+            Color.clear.frame(width: 0)
         }
         .font(.system(size: 11, weight: .semibold).monospacedDigit())
         .foregroundStyle(.white)
     }
 
     private var rightWing: some View {
-        HStack(spacing: 3) {
-            if let w = store.weekly {
-                Text("\(Int(w.percent.rounded()))%")
-                    .foregroundStyle(.white)
-                Text(L10n.weekShort).foregroundStyle(.white.opacity(0.5))
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 3) {
+                if let w = store.weekly {
+                    Text("\(Int(w.percent.rounded()))%")
+                        .foregroundStyle(.white)
+                    Text(L10n.weekShort).foregroundStyle(.white.opacity(0.5))
+                }
             }
+            if let w = store.weekly {
+                Text("\(Int(w.percent.rounded()))%").foregroundStyle(.white)
+            }
+            Color.clear.frame(width: 0)
         }
         .font(.system(size: 11, weight: .semibold).monospacedDigit())
     }

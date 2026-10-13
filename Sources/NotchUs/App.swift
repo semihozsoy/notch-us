@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellable: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        UserDefaults.standard.register(defaults: ["showNotch": true])
+        UserDefaults.standard.register(defaults: ["showNotch": true, "leftWingWidth": 66.0, "rightWingWidth": 66.0])
         cancellable = UserDefaults.standard.publisher(for: \.showNotch)
             .removeDuplicates()
             .receive(on: RunLoop.main)
@@ -34,4 +34,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension UserDefaults {
     @objc dynamic var showNotch: Bool { bool(forKey: "showNotch") }
+    @objc dynamic var leftWingWidth: Double { double(forKey: "leftWingWidth") }
+    @objc dynamic var rightWingWidth: Double { double(forKey: "rightWingWidth") }
 }

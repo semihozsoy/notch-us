@@ -4,6 +4,8 @@
 set -e
 cd "$(dirname "$0")"
 
+# Defaults to the latest git tag (v1.2.0 -> 1.2.0) so local builds report the right version.
+VERSION=${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')}
 VERSION=${VERSION:-1.0.0}
 APP=build/NotchUs.app
 rm -rf "$APP"

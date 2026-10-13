@@ -60,6 +60,7 @@ struct RingView: View {
 
 struct MenuContent: View {
     @ObservedObject var store: UsageStore
+    @ObservedObject var updater = Updater.shared
     @AppStorage("showNotch") private var showNotch = true
     @AppStorage("leftWingWidth") private var leftWingWidth = 66.0
     @AppStorage("rightWingWidth") private var rightWingWidth = 66.0
@@ -77,6 +78,10 @@ struct MenuContent: View {
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(Capsule().fill(Color.orange.opacity(0.2)))
                 }
+            }
+
+            if updater.updateAvailable, let latest = updater.latestVersion {
+                updateBanner(latest)
             }
 
             if let error = store.error {
@@ -120,9 +125,15 @@ struct MenuContent: View {
                 }
 
             HStack {
-                if let t = store.lastUpdated {
-                    Text(L10n.updated(Fmt.resetTime(t))).font(.system(size: 10)).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    if let t = store.lastUpdated {
+                        Text(L10n.updated(Fmt.resetTime(t)))
+                    }
+                    if let v = updater.currentVersion {
+                        Text("v\(v)")
+                    }
                 }
+                .font(.system(size: 10)).foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     Task { await store.refresh() }
@@ -140,6 +151,29 @@ struct MenuContent: View {
         .controlSize(.small)
         .padding(14)
         .frame(width: 300)
+    }
+
+    private func updateBanner(_ latest: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.blue)
+                Text(L10n.updateAvailable(latest, installed: updater.currentVersion ?? "?"))
+                    .font(.system(size: 11, weight: .medium))
+                Spacer()
+                Button {
+                    Task { await updater.install() }
+                } label: {
+                    if updater.isUpdating { ProgressView().controlSize(.small) } else { Text(L10n.update) }
+                }
+                .disabled(updater.isUpdating)
+            }
+            if let error = updater.error {
+                Text(error).font(.system(size: 10)).foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 8).fill(Color.blue.opacity(0.12)))
     }
 
     private func wingSlider(_ title: String, value: Binding<Double>) -> some View {
@@ -160,6 +194,7 @@ struct MenuContent: View {
 
 struct MenuBarLabel: View {
     @ObservedObject var store: UsageStore
+    @ObservedObject var updater = Updater.shared
 
     var body: some View {
         HStack(spacing: 3) {
@@ -167,6 +202,9 @@ struct MenuBarLabel: View {
             if let s = store.session {
                 let w = store.weekly.map { " · \(Int($0.percent.rounded()))%" } ?? ""
                 Text("\(Int(s.percent.rounded()))%\(w)").monospacedDigit()
+            }
+            if updater.updateAvailable {
+                Image(systemName: "circle.fill").font(.system(size: 5))
             }
         }
     }

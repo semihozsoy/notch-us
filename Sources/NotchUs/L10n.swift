@@ -50,6 +50,13 @@ enum L10n {
     static func updated(_ time: String) -> String { t("Updated \(time)", "Güncellendi \(time)") }
     static var quit: String { t("Quit", "Çık") }
 
+    // Updates
+    static func updateAvailable(_ latest: String, installed: String) -> String {
+        t("v\(latest) available (installed: v\(installed))", "v\(latest) mevcut (yüklü: v\(installed))")
+    }
+    static var update: String { t("Update", "Güncelle") }
+    static func updateFailed(_ reason: String) -> String { t("Update failed: \(reason)", "Güncelleme başarısız: \(reason)") }
+
     // Errors
     static var noCredentials: String {
         t("No Claude Code login found. Sign in with `claude` in Terminal.",

@@ -172,7 +172,7 @@ struct NotchView: View {
             if let w = store.weekly {
                 Text("\(Int(w.percent.rounded()))%")
                     .foregroundStyle(.white)
-                Text("7g").foregroundStyle(.white.opacity(0.5))
+                Text(L10n.weekShort).foregroundStyle(.white.opacity(0.5))
             }
         }
         .font(.system(size: 11, weight: .semibold).monospacedDigit())
@@ -186,9 +186,9 @@ struct NotchView: View {
             if let s = store.session { LimitRow(limit: s, now: store.now, dark: true) }
             if let w = store.weekly { LimitRow(limit: w, now: store.now, dark: true) }
             HStack {
-                Text("Bugün \(Fmt.tokens(store.local.todayTokens)) token · \(store.local.todayMessages) yanıt")
+                Text(L10n.notchToday(Fmt.tokens(store.local.todayTokens), store.local.todayMessages))
                 Spacer()
-                Text("Son 5sa \(Fmt.tokens(store.local.last5hTokens))")
+                Text(L10n.notchLast5h(Fmt.tokens(store.local.last5hTokens)))
             }
             .font(.system(size: 10).monospacedDigit())
             .foregroundStyle(.white.opacity(0.55))

@@ -67,10 +67,10 @@ enum UsageError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noCredentials: return "Claude Code girişi bulunamadı. Terminalde `claude` ile giriş yap."
-        case .tokenExpired: return "Oturum anahtarının süresi dolmuş. Claude Code'u bir kez çalıştırınca yenilenir."
-        case .http(let code): return "Sunucu hatası (HTTP \(code))."
-        case .badResponse: return "Beklenmeyen yanıt."
+        case .noCredentials: return L10n.noCredentials
+        case .tokenExpired: return L10n.tokenExpired
+        case .http(let code): return L10n.httpError(code)
+        case .badResponse: return L10n.badResponse
         }
     }
 }
@@ -141,13 +141,13 @@ enum UsageAPI {
         }
 
         let extra = [
-            window("seven_day_opus", "Haftalık · Opus"),
-            window("seven_day_sonnet", "Haftalık · Sonnet"),
+            window("seven_day_opus", L10n.weeklyOpus),
+            window("seven_day_sonnet", L10n.weeklySonnet),
         ].compactMap { $0 }
 
         return UsageResult(
-            session: window("five_hour", "Oturum (5 saat)"),
-            weekly: window("seven_day", "Haftalık"),
+            session: window("five_hour", L10n.session),
+            weekly: window("seven_day", L10n.weekly),
             extra: extra,
             plan: creds.plan
         )
@@ -179,17 +179,17 @@ enum Fmt {
     static func countdown(to date: Date?, now: Date) -> String {
         guard let date else { return "" }
         let secs = Int(date.timeIntervalSince(now))
-        if secs <= 0 { return "şimdi sıfırlanıyor" }
+        if secs <= 0 { return L10n.resettingNow }
         let d = secs / 86400, h = (secs % 86400) / 3600, m = (secs % 3600) / 60
-        if d > 0 { return "\(d)g \(h)sa" }
-        if h > 0 { return "\(h)sa \(m)dk" }
-        return "\(max(m, 1))dk"
+        if d > 0 { return L10n.days(d, hours: h) }
+        if h > 0 { return L10n.hours(h, minutes: m) }
+        return L10n.minutes(max(m, 1))
     }
 
     static func resetTime(_ date: Date?) -> String {
         guard let date else { return "" }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "tr_TR")
+        f.locale = L10n.locale
         f.dateFormat = Calendar.current.isDateInToday(date) ? "HH:mm" : "d MMM EEE HH:mm"
         return f.string(from: date)
     }

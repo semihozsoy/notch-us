@@ -11,13 +11,13 @@ struct LimitRow: View {
             HStack {
                 Text(limit.title).font(.system(size: 12, weight: .medium))
                 Spacer()
-                Text("%\(Int(limit.percent.rounded()))")
+                Text(L10n.percent(Int(limit.percent.rounded())))
                     .font(.system(size: 12, weight: .semibold).monospacedDigit())
                     .foregroundStyle(Fmt.color(for: limit.percent))
             }
             ProgressBar(value: limit.percent / 100, color: Fmt.color(for: limit.percent), dark: dark)
             if limit.resetsAt != nil {
-                Text("\(Fmt.countdown(to: limit.resetsAt, now: now)) sonra sıfırlanır · \(Fmt.resetTime(limit.resetsAt))")
+                Text(L10n.resetsIn(Fmt.countdown(to: limit.resetsAt, now: now), at: Fmt.resetTime(limit.resetsAt)))
                     .font(.system(size: 10))
                     .foregroundStyle(dark ? Color.white.opacity(0.55) : .secondary)
             }
@@ -67,7 +67,7 @@ struct MenuContent: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "sparkle").foregroundStyle(.orange)
-                Text("Claude Code Kullanımı").font(.headline)
+                Text(L10n.title).font(.headline)
                 Spacer()
                 if let plan = store.plan {
                     Text(plan.capitalized)
@@ -91,10 +91,10 @@ struct MenuContent: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Yerel kayıtlar").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                statLine("Bugün", "\(Fmt.tokens(store.local.todayTokens)) token · \(store.local.todayMessages) yanıt")
-                statLine("Bugün çıktı", "\(Fmt.tokens(store.local.todayOutput)) token")
-                statLine("Son 5 saat", "\(Fmt.tokens(store.local.last5hTokens)) token · \(store.local.last5hMessages) yanıt")
+                Text(L10n.localLogs).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                statLine(L10n.today, L10n.tokensAndReplies(Fmt.tokens(store.local.todayTokens), store.local.todayMessages))
+                statLine(L10n.todayOutput, L10n.tokens(Fmt.tokens(store.local.todayOutput)))
+                statLine(L10n.last5Hours, L10n.tokensAndReplies(Fmt.tokens(store.local.last5hTokens), store.local.last5hMessages))
                 ForEach(store.local.todayByModel.prefix(3), id: \.model) { m in
                     statLine("  " + m.model.replacingOccurrences(of: "claude-", with: ""), Fmt.tokens(m.tokens))
                 }
@@ -102,20 +102,20 @@ struct MenuContent: View {
 
             Divider()
 
-            Toggle("Çentikte göster", isOn: $showNotch)
-            Toggle("Girişte başlat", isOn: $launchAtLogin)
+            Toggle(L10n.showInNotch, isOn: $showNotch)
+            Toggle(L10n.launchAtLogin, isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, on in
                     do {
                         if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
                     } catch {
-                        store.error = "Girişte başlatma ayarlanamadı: \(error.localizedDescription)"
+                        store.error = L10n.launchAtLoginFailed(error.localizedDescription)
                         launchAtLogin = SMAppService.mainApp.status == .enabled
                     }
                 }
 
             HStack {
                 if let t = store.lastUpdated {
-                    Text("Güncellendi \(Fmt.resetTime(t))").font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text(L10n.updated(Fmt.resetTime(t))).font(.system(size: 10)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button {
@@ -125,7 +125,7 @@ struct MenuContent: View {
                 }
                 .buttonStyle(.borderless)
                 .keyboardShortcut("r")
-                Button("Çık") { NSApp.terminate(nil) }
+                Button(L10n.quit) { NSApp.terminate(nil) }
                     .buttonStyle(.borderless)
                     .keyboardShortcut("q")
             }

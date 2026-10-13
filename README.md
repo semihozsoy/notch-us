@@ -29,13 +29,21 @@ Nothing leaves your machine except that single request to Anthropic. No analytic
 
 Requires macOS 14+ (Apple Silicon or Intel). You need to be logged in to Claude Code (`claude` → `/login`) so the token is in the keychain.
 
-### One-liner (recommended)
+### Homebrew (recommended)
+
+```sh
+brew install --cask semihozsoy/tap/notch-us
+```
+
+### One-liner
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/semihozsoy/notch-us/master/install.sh | sh
 ```
 
-Downloads the latest release, puts it in `~/Applications` and opens it. Run it again any time to update.
+Downloads the latest release, puts it in `~/Applications` and opens it.
+
+Either way, the app checks for new releases and updates itself from the menu. On v1.2.0 or older? Run the one-liner once; from v1.3.0 on, it tells you.
 
 ### Manual download
 
